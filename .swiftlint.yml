@@ -1,0 +1,38 @@
+# Конфигурация SwiftLint (задание разрешает "подключить линтер").
+# Установка: brew install swiftlint, запуск из корня проекта: swiftlint
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+
+disabled_rules:
+  - todo
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - joined_default_parameter
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - unneeded_parentheses_in_closure_argument
+
+line_length:
+  warning: 120
+  error: 160
+
+file_length:
+  warning: 300
+
+type_body_length:
+  warning: 250
+
+identifier_name:
+  min_length: 1
+
+trailing_whitespace:
+  ignores_empty_lines: true
