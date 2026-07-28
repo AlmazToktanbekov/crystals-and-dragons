@@ -27,8 +27,8 @@ final class ConsoleView: GameView {
         showError("Please enter a number greater than or equal to \(minimum).")
     }
 
-    func showMazeCreated(width: Int, height: Int, stepLimit: Int) {
-        showInfo("A maze of \(width)x\(height) = \(width * height) rooms has been created.")
+    func showMazeCreated(roomCount: Int, stepLimit: Int) {
+        showInfo("A maze of \(roomCount) rooms has been created.")
         showInfo("You have \(stepLimit) steps before you starve. Good luck!")
         print("")
     }

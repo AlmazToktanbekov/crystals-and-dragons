@@ -40,6 +40,22 @@ final class MazeGeneratorTests: XCTestCase {
         }
     }
 
+    func testMazeHasExactlyTheRequestedRoomCount() {
+        for roomCount in [4, 7, 10, 13, 33] {
+            for _ in 0..<20 {
+                let maze = generator.generate(roomCount: roomCount)
+                XCTAssertEqual(maze.roomCount, roomCount)
+                XCTAssertTrue(maze.isConnected, "Лабиринт из \(roomCount) комнат оказался несвязным")
+            }
+        }
+    }
+
+    /// Слишком маленький запрос поднимаем до минимума, а не падаем.
+    func testTooSmallRequestGrowsToMinimum() {
+        let maze = generator.generate(roomCount: 1)
+        XCTAssertEqual(maze.roomCount, RandomMazeGenerator.minimumRoomCount)
+    }
+
     func testGridIsBigEnoughForRequestedRoomCount() {
         for roomCount in [4, 7, 10, 33] {
             let size = RandomMazeGenerator.gridSize(for: roomCount)

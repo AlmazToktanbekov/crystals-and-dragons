@@ -1,30 +1,40 @@
 import Foundation
 
-/// Лабиринт — прямоугольная матрица комнат.
+/// Лабиринт — комнаты, расставленные по клеткам прямоугольной сетки.
+///
+/// Заполнять сетку целиком не обязательно: игрок может попросить, например,
+/// 7 комнат — тогда в сетке 3x3 живыми будут только 7 клеток, а остальные
+/// просто не существуют. Поэтому `width`/`height` — это габариты сетки,
+/// а настоящее число комнат хранится в `roomCount`.
 ///
 /// Класс отвечает за хранение комнат и за «геометрию»: где сосед,
 /// как открыть дверь, как посчитать расстояния. Правил игры здесь нет.
 final class Maze {
+    /// Габариты сетки (описанный прямоугольник), а не число комнат.
     let width: Int
     let height: Int
 
     private var rooms: [Position: Room]
 
-    init(width: Int, height: Int) {
+    /// Полностью заполненная сетка width x height.
+    convenience init(width: Int, height: Int) {
+        let all = (0..<height).flatMap { y in (0..<width).map { Position(x: $0, y: y) } }
+        self.init(width: width, height: height, positions: Set(all))
+    }
+
+    /// Сетка, в которой существуют только перечисленные клетки.
+    init(width: Int, height: Int, positions: Set<Position>) {
         self.width = width
         self.height = height
 
         var storage: [Position: Room] = [:]
-        for y in 0..<height {
-            for x in 0..<width {
-                let position = Position(x: x, y: y)
-                storage[position] = Room(position: position)
-            }
+        for position in positions {
+            storage[position] = Room(position: position)
         }
         self.rooms = storage
     }
 
-    var roomCount: Int { width * height }
+    var roomCount: Int { rooms.count }
 
     /// Все комнаты в стабильном порядке (слева направо, сверху вниз).
     var allRooms: [Room] {
@@ -33,8 +43,10 @@ final class Maze {
         }
     }
 
+    /// Есть ли в этой клетке комната. Клетки за границами сетки
+    /// и «вырезанные» клетки одинаково считаются несуществующими.
     func contains(_ position: Position) -> Bool {
-        (0..<width).contains(position.x) && (0..<height).contains(position.y)
+        rooms[position] != nil
     }
 
     func room(at position: Position) -> Room? {

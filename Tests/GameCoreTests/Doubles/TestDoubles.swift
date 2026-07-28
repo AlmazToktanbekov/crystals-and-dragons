@@ -8,12 +8,13 @@ final class SpyView: GameView {
     private(set) var messages: [String] = []
     private(set) var didWin = false
     private(set) var didLose = false
+    private(set) var didQuit = false
     private(set) var darknessShown = 0
 
     func showWelcome() {}
     func showRoomCountPrompt() {}
     func showInvalidRoomCount(minimum: Int) {}
-    func showMazeCreated(width: Int, height: Int, stepLimit: Int) {}
+    func showMazeCreated(roomCount: Int, stepLimit: Int) {}
 
     func showRoom(_ room: Room) {
         messages.append("room \(room.position.description)")
@@ -47,7 +48,9 @@ final class SpyView: GameView {
         didLose = true
     }
 
-    func showGoodbye() {}
+    func showGoodbye() {
+        didQuit = true
+    }
 }
 
 /// «Поддельная» клавиатура: выдаёт заранее заготовленные строки.

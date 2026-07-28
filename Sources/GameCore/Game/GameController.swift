@@ -45,8 +45,7 @@ final class GameController {
         let world = populator.populate(maze: maze)
 
         view.showMazeCreated(
-            width: maze.width,
-            height: maze.height,
+            roomCount: maze.roomCount,
             stepLimit: world.player.maxSteps
         )
 

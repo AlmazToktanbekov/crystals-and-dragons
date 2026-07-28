@@ -11,14 +11,19 @@ protocol MazeGenerating {
 /// Случайный генератор на основе обхода в глубину (DFS).
 ///
 /// Как это работает:
-/// 1. Берём сетку комнат без дверей.
-/// 2. Идём из случайной комнаты, каждый раз выбирая случайного непосещённого
-///    соседа и прорубая к нему дверь. Если соседей нет — откатываемся назад.
+/// 1. Берём пустую сетку, в которую заведомо влезает нужное число комнат.
+/// 2. Идём из случайной клетки, каждый раз выбирая случайного непосещённого
+///    соседа и запоминая дверь к нему. Если соседей нет — откатываемся назад.
+///    Останавливаемся, как только набрали ровно столько комнат, сколько просили.
 /// 3. В итоге получается «остовное дерево»: все комнаты соединены,
 ///    и лабиринт гарантированно проходим — изолированных кусков не бывает.
+///    Незанятые клетки сетки комнатами не становятся.
 /// 4. Потом добавляем немного случайных дверей, чтобы появились кольца
 ///    и лабиринт стал интереснее.
 struct RandomMazeGenerator: MazeGenerating {
+
+    /// Меньше четырёх комнат делать бессмысленно.
+    static let minimumRoomCount = 4
 
     /// Вероятность добавить комнате лишнюю дверь (для разнообразия).
     private let extraDoorChance: Double
@@ -28,19 +33,24 @@ struct RandomMazeGenerator: MazeGenerating {
     }
 
     func generate(roomCount: Int) -> Maze {
-        let size = Self.gridSize(for: roomCount)
-        let maze = Maze(width: size.width, height: size.height)
+        let requested = max(roomCount, Self.minimumRoomCount)
+        let size = Self.gridSize(for: requested)
 
-        carvePassages(in: maze)
+        let plan = carvePlan(roomCount: requested, in: size)
+        let maze = Maze(width: size.width, height: size.height, positions: plan.rooms)
+        for door in plan.doors {
+            maze.openDoor(from: door.from, to: door.direction)
+        }
+
         addExtraDoors(in: maze)
 
         return maze
     }
 
-    /// Подбираем размеры прямоугольной матрицы, близкие к квадрату.
-    /// Например, для 10 комнат получится сетка 3x4 = 12 комнат.
+    /// Габариты сетки, близкие к квадрату и заведомо вмещающие все комнаты.
+    /// Например, для 7 комнат получится сетка 3x3, две клетки останутся пустыми.
     static func gridSize(for roomCount: Int) -> (width: Int, height: Int) {
-        let requested = max(roomCount, 4)
+        let requested = max(roomCount, minimumRoomCount)
         let width = max(2, Int(Double(requested).squareRoot().rounded()))
         let height = max(2, Int((Double(requested) / Double(width)).rounded(.up)))
         return (width, height)
@@ -48,20 +58,37 @@ struct RandomMazeGenerator: MazeGenerating {
 
     // MARK: - Шаг 1: остовное дерево (гарантия связности)
 
-    private func carvePassages(in maze: Maze) {
+    private struct Door {
+        let from: Position
+        let direction: Direction
+    }
+
+    private struct Plan {
+        let rooms: Set<Position>
+        let doors: [Door]
+    }
+
+    /// Выбираем клетки будущих комнат и двери между ними.
+    /// Комнат получается ровно `roomCount`, и все они связаны в дерево.
+    private func carvePlan(roomCount: Int, in size: (width: Int, height: Int)) -> Plan {
+        func insideGrid(_ position: Position) -> Bool {
+            (0..<size.width).contains(position.x) && (0..<size.height).contains(position.y)
+        }
+
         let start = Position(
-            x: Int.random(in: 0..<maze.width),
-            y: Int.random(in: 0..<maze.height)
+            x: Int.random(in: 0..<size.width),
+            y: Int.random(in: 0..<size.height)
         )
 
         var visited: Set<Position> = [start]
+        var doors: [Door] = []
         var stack: [Position] = [start]
 
-        while let current = stack.last {
-            // Куда ещё можно пойти из текущей комнаты?
+        while visited.count < roomCount, let current = stack.last {
+            // Куда ещё можно пойти из текущей клетки?
             let options = Direction.allCases.filter { direction in
                 let next = current.moved(direction)
-                return maze.contains(next) && !visited.contains(next)
+                return insideGrid(next) && !visited.contains(next)
             }
 
             guard let direction = options.randomElement() else {
@@ -70,10 +97,12 @@ struct RandomMazeGenerator: MazeGenerating {
             }
 
             let next = current.moved(direction)
-            maze.openDoor(from: current, to: direction)
+            doors.append(Door(from: current, direction: direction))
             visited.insert(next)
             stack.append(next)
         }
+
+        return Plan(rooms: visited, doors: doors)
     }
 
     // MARK: - Шаг 2: немного лишних дверей

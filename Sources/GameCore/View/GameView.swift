@@ -9,7 +9,7 @@ protocol GameView {
     func showWelcome()
     func showRoomCountPrompt()
     func showInvalidRoomCount(minimum: Int)
-    func showMazeCreated(width: Int, height: Int, stepLimit: Int)
+    func showMazeCreated(roomCount: Int, stepLimit: Int)
 
     /// Обычное описание комнаты (координаты, двери, предметы).
     func showRoom(_ room: Room)

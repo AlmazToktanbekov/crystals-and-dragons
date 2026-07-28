@@ -97,7 +97,7 @@ final class GameSessionTests: XCTestCase {
         XCTAssertFalse(world.player.hasItem(named: "gold"))
     }
 
-    func testDarkRoomBlocksEverythingExceptMovement() {
+    func testDarkRoomBlocksActionsWithTheWorld() {
         let view = SpyView()
         let world = makeWorld()
         world.maze.room(at: Position(x: 1, y: 0))?.isDark = true
@@ -108,6 +108,20 @@ final class GameSessionTests: XCTestCase {
         XCTAssertFalse(view.didWin)
         // Тьма показана дважды: при входе в комнату и в ответ на запрещённую команду.
         XCTAssertEqual(view.darknessShown, 2)
+    }
+
+    /// Служебные команды темнота блокировать не должна:
+    /// иначе из тёмной комнаты нельзя выйти из игры.
+    func testDarkRoomStillAllowsQuit() {
+        let view = SpyView()
+        let world = makeWorld()
+        world.maze.room(at: Position(x: 1, y: 0))?.isDark = true
+
+        let session = makeSession(world: world, view: view, commands: ["E", "quit"])
+        session.run()
+
+        XCTAssertTrue(view.didQuit)
+        XCTAssertEqual(view.darknessShown, 1)   // только при входе в комнату
     }
 
     func testTorchlightLightsTheDarkRoom() {

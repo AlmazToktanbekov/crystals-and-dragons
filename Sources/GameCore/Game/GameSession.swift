@@ -116,8 +116,8 @@ final class GameSession {
     // MARK: - Выполнение команд
 
     private func perform(_ command: Command) {
-        // В тёмной комнате разрешено только движение.
-        if isDark(currentRoom) && !command.isMovement {
+        // В тёмной комнате разрешено только движение и служебные команды.
+        if isDark(currentRoom) && !command.isAllowedInDarkness {
             view.showDarkness()
             return
         }
